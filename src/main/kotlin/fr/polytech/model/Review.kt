@@ -2,8 +2,7 @@ package fr.polytech.model
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
-import java.util.Optional
-import java.util.UUID
+import java.util.*
 
 @Document(collection = "reviews")
 data class Review(
@@ -12,5 +11,6 @@ data class Review(
     var grade: Int,
     var message: String,
     var senderId: UUID,
-    var responseList: Optional<List<Response>> = Optional.empty()
+    var responseList: List<Response>,
+    var date: Date
 )

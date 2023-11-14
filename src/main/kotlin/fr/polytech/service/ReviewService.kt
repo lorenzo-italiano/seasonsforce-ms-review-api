@@ -1,9 +1,12 @@
 package fr.polytech.service
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.interfaces.DecodedJWT
 import fr.polytech.model.Response
 import fr.polytech.model.Review
 import fr.polytech.model.request.PatchReviewDTO
 import fr.polytech.model.request.ResponseDTO
+import fr.polytech.model.request.ReviewDTO
 import fr.polytech.repository.ReviewRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,9 +52,17 @@ class ReviewService @Autowired constructor(
      * @param review the review to create
      * @return the created review
      */
-    fun createReview(review: Review): Review {
+    fun createReview(review: ReviewDTO): Review {
         logger.info("Creating review")
-        return reviewRepository.save(review)
+        val reviewToCreate: Review = Review(
+            UUID.randomUUID(),
+            review.grade,
+            review.message,
+            review.senderId,
+            listOf(),
+            Date()
+        )
+        return reviewRepository.save(reviewToCreate)
     }
 
     /**
@@ -86,12 +97,12 @@ class ReviewService @Autowired constructor(
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val responseToAdd: Response = Response(
             UUID.randomUUID(),
-            response.date,
+            Date(),
             response.message,
             response.senderId
         )
         val reviewUpdated: Review = reviewToUpdate
-        reviewUpdated.responseList = Optional.of(reviewToUpdate.responseList.orElse(listOf()).plus(responseToAdd))
+        reviewUpdated.responseList = reviewToUpdate.responseList.plus(responseToAdd)
         return reviewRepository.save(reviewUpdated)
     }
 
@@ -108,13 +119,13 @@ class ReviewService @Autowired constructor(
         val reviewToUpdate: Review =
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val reviewUpdated: Review = reviewToUpdate
-        reviewUpdated.responseList = Optional.of(reviewToUpdate.responseList.orElse(listOf()).map { r ->
+        reviewUpdated.responseList = reviewToUpdate.responseList.map { r ->
             if (r.id == response.id) {
                 response
             } else {
                 r
             }
-        })
+        }
         return reviewRepository.save(reviewUpdated)
     }
 
@@ -144,9 +155,25 @@ class ReviewService @Autowired constructor(
         val reviewToUpdate: Review =
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val reviewUpdated: Review = reviewToUpdate
-        reviewUpdated.responseList = Optional.of(reviewToUpdate.responseList.orElse(listOf()).filter { r ->
+        reviewUpdated.responseList = reviewToUpdate.responseList.filter { r ->
             r.id != response.id
-        })
+        }
         return reviewRepository.save(reviewUpdated)
+    }
+
+    /**
+     * Check if the user is the sender of the review.
+     * @param id the id of the review
+     * @param bearerToken the token of the user
+     * @return true if the user is the sender of the review, false otherwise
+     */
+    fun checkUser(id: UUID, bearerToken: String): Boolean {
+        val token: String = bearerToken.split(" ")[1]
+        val decodedToken: DecodedJWT? = JWT.decode(token)
+        return if (decodedToken == null) {
+            false
+        } else {
+            decodedToken.getClaim("sub").asString() == id.toString()
+        }
     }
 }

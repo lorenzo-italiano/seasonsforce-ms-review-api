@@ -7,7 +7,7 @@ RUN mkdir /app
 WORKDIR /app
 
 # Copy the jar to the container
-COPY seasonsforce-ms-payment-api-1.0-SNAPSHOT.jar /app/app.jar
+COPY seasonsforce-ms-review-api-1.0-SNAPSHOT.jar /app/app.jar
 
 # Expose the port 8080
 EXPOSE 8080

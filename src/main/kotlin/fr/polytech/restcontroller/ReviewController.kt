@@ -4,6 +4,7 @@ import fr.polytech.model.Response
 import fr.polytech.model.Review
 import fr.polytech.model.request.PatchReviewDTO
 import fr.polytech.model.request.ResponseDTO
+import fr.polytech.model.request.ReviewDTO
 import fr.polytech.service.ReviewService
 import jakarta.ws.rs.Consumes
 import jakarta.ws.rs.Produces
@@ -13,13 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
 import java.util.*
 
 @Controller
-@RequestMapping("/api/v1/reviews")
+@RequestMapping("/api/v1/review")
 class ReviewController @Autowired constructor(
     private val reviewService: ReviewService
 ) {
@@ -76,9 +78,13 @@ class ReviewController @Autowired constructor(
      * @return the created review
      */
     @PostMapping("/")
+    @PreAuthorize("(hasRole('client_recruiter') or hasRole('client_admin')) and @reviewService.checkUser(#review.senderId, #token)")
     @Consumes(MediaType.APPLICATION_JSON_VALUE)
     @Produces(MediaType.APPLICATION_JSON_VALUE)
-    fun createReview(@RequestBody review: Review): ResponseEntity<Review> {
+    fun createReview(
+        @RequestBody review: ReviewDTO,
+        @RequestHeader("Authorization") token: String
+        ): ResponseEntity<Review> {
         return try {
             val createdReview: Review = reviewService.createReview(review)
             logger.info("Created review with id ${createdReview.id}")

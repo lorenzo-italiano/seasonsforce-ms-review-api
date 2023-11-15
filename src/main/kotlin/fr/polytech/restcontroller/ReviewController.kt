@@ -1,5 +1,6 @@
 package fr.polytech.restcontroller
 
+import fr.polytech.annotation.IsRecruiterOrAdminAndSender
 import fr.polytech.model.Response
 import fr.polytech.model.Review
 import fr.polytech.model.request.PatchReviewDTO
@@ -14,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
@@ -43,10 +43,10 @@ class ReviewController @Autowired constructor(
             logger.info("Got all reviews")
             ResponseEntity(reviews, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to get all reviews", e)
+            logger.error("Failed to get all reviews : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to get all reviews", e)
+            logger.error("Failed to get all reviews")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -64,10 +64,10 @@ class ReviewController @Autowired constructor(
             logger.info("Got review with id $id")
             ResponseEntity(review, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to get review with id $id", e)
+            logger.error("Failed to get review with id $id : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to get review with id $id", e)
+            logger.error("Failed to get review with id $id")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -78,22 +78,22 @@ class ReviewController @Autowired constructor(
      * @return the created review
      */
     @PostMapping("/")
-    @PreAuthorize("(hasRole('client_recruiter') or hasRole('client_admin')) and @reviewService.checkUser(#review.senderId, #token)")
+    @IsRecruiterOrAdminAndSender
     @Consumes(MediaType.APPLICATION_JSON_VALUE)
     @Produces(MediaType.APPLICATION_JSON_VALUE)
     fun createReview(
         @RequestBody review: ReviewDTO,
         @RequestHeader("Authorization") token: String
-        ): ResponseEntity<Review> {
+    ): ResponseEntity<Review> {
         return try {
             val createdReview: Review = reviewService.createReview(review)
             logger.info("Created review with id ${createdReview.id}")
             ResponseEntity(createdReview, HttpStatus.CREATED)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to create review", e)
+            logger.error("Failed to create review : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to create review", e)
+            logger.error("Failed to create review : ")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -113,10 +113,10 @@ class ReviewController @Autowired constructor(
             logger.info("Updated review with id $id")
             ResponseEntity(updatedReview, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to update review with id $id", e)
+            logger.error("Failed to update review with id $id : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to update review with id $id", e)
+            logger.error("Failed to update review with id $id")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -136,10 +136,10 @@ class ReviewController @Autowired constructor(
             logger.info("Added response to review with id $id")
             ResponseEntity(updatedReview, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to add response to review with id $id", e)
+            logger.error("Failed to add response to review with id $id : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to add response to review with id $id", e)
+            logger.error("Failed to add response to review with id $id")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -159,10 +159,10 @@ class ReviewController @Autowired constructor(
             logger.info("Modified response to review with id $id")
             ResponseEntity(updatedReview, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to modify response to review with id $id", e)
+            logger.error("Failed to modify response to review with id $id : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to modify response to review with id $id", e)
+            logger.error("Failed to modify response to review with id $id")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -180,10 +180,10 @@ class ReviewController @Autowired constructor(
             logger.info("Deleted review with id $id")
             ResponseEntity(true, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to delete review with id $id", e)
+            logger.error("Failed to delete review with id $id : " + e.statusCode)
             ResponseEntity(false, e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to delete review with id $id", e)
+            logger.error("Failed to delete review with id $id")
             ResponseEntity(false, HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -202,10 +202,10 @@ class ReviewController @Autowired constructor(
             logger.info("Deleted response of review with id $id")
             ResponseEntity(updatedReview, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {
-            logger.error("Failed to delete response of review with id $id", e)
+            logger.error("Failed to delete response of review with id $id : " + e.statusCode)
             ResponseEntity(e.statusCode)
         } catch (e: Exception) {
-            logger.error("Failed to delete response of review with id $id", e)
+            logger.error("Failed to delete response of review with id $id")
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }

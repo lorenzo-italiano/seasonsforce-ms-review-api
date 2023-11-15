@@ -52,8 +52,10 @@ class ReviewService @Autowired constructor(
      * @param review the review to create
      * @return the created review
      */
+    @Throws(HttpClientErrorException::class)
     fun createReview(review: ReviewDTO): Review {
         logger.info("Creating review")
+        validateGrade(review.grade)
         val reviewToCreate: Review = Review(
             UUID.randomUUID(),
             review.grade,
@@ -76,6 +78,7 @@ class ReviewService @Autowired constructor(
     @Throws(HttpClientErrorException::class)
     fun updateReview(id: UUID, review: PatchReviewDTO): Review {
         logger.info("Updating review with id $id")
+        validateGrade(review.grade)
         val reviewToUpdate: Review =
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val reviewUpdated: Review = reviewToUpdate
@@ -175,6 +178,18 @@ class ReviewService @Autowired constructor(
             false
         } else {
             decodedToken.getClaim("sub").asString() == id.toString()
+        }
+    }
+
+    /**
+     * Validate the grade of the review.
+     * @param grade the grade to validate
+     * @throws HttpClientErrorException if the grade is not valid
+     */
+    @Throws(HttpClientErrorException::class)
+    fun validateGrade(grade: Int) {
+        if (grade < 0 || grade > 5) {
+            throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "The grade must be between 0 and 5")
         }
     }
 }

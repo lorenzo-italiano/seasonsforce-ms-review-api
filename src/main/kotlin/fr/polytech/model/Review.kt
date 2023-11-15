@@ -12,5 +12,6 @@ data class Review(
     var message: String,
     var senderId: UUID,
     var responseList: List<Response>,
-    var date: Date
+    var date: Date,
+    var offerId: UUID
 )

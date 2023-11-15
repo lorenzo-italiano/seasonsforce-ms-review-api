@@ -60,7 +60,8 @@ class ReviewService @Autowired constructor(
             review.message,
             review.senderId,
             listOf(),
-            Date()
+            Date(),
+            review.offerId
         )
         return reviewRepository.save(reviewToCreate)
     }

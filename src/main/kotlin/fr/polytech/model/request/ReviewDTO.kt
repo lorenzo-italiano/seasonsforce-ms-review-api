@@ -5,5 +5,6 @@ import java.util.*
 class ReviewDTO (
     val grade: Int,
     val message: String,
-    val senderId: UUID
+    val senderId: UUID,
+    val offerId: UUID
 )

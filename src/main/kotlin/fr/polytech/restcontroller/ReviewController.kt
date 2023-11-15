@@ -127,7 +127,7 @@ class ReviewController @Autowired constructor(
      * @param response the response to add
      * @return the updated review
      */
-    @PatchMapping("/add/response/{id}")
+    @PostMapping("/add/response/{id}")
     @Consumes(MediaType.APPLICATION_JSON_VALUE)
     @Produces(MediaType.APPLICATION_JSON_VALUE)
     fun addResponseToReview(@PathVariable id: UUID, @RequestBody response: ResponseDTO): ResponseEntity<Review> {

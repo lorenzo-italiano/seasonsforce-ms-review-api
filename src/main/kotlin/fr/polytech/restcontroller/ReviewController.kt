@@ -1,6 +1,7 @@
 package fr.polytech.restcontroller
 
 import fr.polytech.annotation.IsRecruiterOrAdminAndSender
+import fr.polytech.model.DetailedReviewDTO
 import fr.polytech.model.Response
 import fr.polytech.model.Review
 import fr.polytech.model.request.PatchReviewDTO
@@ -61,6 +62,27 @@ class ReviewController @Autowired constructor(
     fun getReviewById(@PathVariable id: UUID): ResponseEntity<Review> {
         return try {
             val review: Review = reviewService.getReviewById(id)
+            logger.info("Got review with id $id")
+            ResponseEntity(review, HttpStatus.OK)
+        } catch (e: HttpClientErrorException) {
+            logger.error("Failed to get review with id $id : " + e.statusCode)
+            ResponseEntity(e.statusCode)
+        } catch (e: Exception) {
+            logger.error("Failed to get review with id $id")
+            ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**
+     * Get a detailed review by its id.
+     * @param id the id of the review to get
+     * @return the review with the given id
+     */
+    @GetMapping("/detailed/{id}")
+    @Produces(MediaType.APPLICATION_JSON_VALUE)
+    fun getDetailedReviewById(@PathVariable id: UUID, @RequestHeader("Authorization") token: String): ResponseEntity<DetailedReviewDTO> {
+        return try {
+            val review: DetailedReviewDTO = reviewService.getDetailedReviewById(id, token)
             logger.info("Got review with id $id")
             ResponseEntity(review, HttpStatus.OK)
         } catch (e: HttpClientErrorException) {

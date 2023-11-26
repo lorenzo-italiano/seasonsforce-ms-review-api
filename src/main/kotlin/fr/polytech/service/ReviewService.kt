@@ -2,8 +2,7 @@ package fr.polytech.service
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.interfaces.DecodedJWT
-import fr.polytech.model.Response
-import fr.polytech.model.Review
+import fr.polytech.model.*
 import fr.polytech.model.request.PatchReviewDTO
 import fr.polytech.model.request.ResponseDTO
 import fr.polytech.model.request.ReviewDTO
@@ -17,7 +16,9 @@ import java.util.*
 
 @Service
 class ReviewService @Autowired constructor(
-    private val reviewRepository: ReviewRepository
+    private val reviewRepository: ReviewRepository,
+    private val userService: UserService,
+    private val offerService: OfferService
 ) {
 
     /**
@@ -191,5 +192,40 @@ class ReviewService @Autowired constructor(
         if (grade < 0 || grade > 5) {
             throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "The grade must be between 0 and 5")
         }
+    }
+
+    fun getDetailedReviewById(id: UUID, token: String): DetailedReviewDTO {
+        val review: Review = getReviewById(id)
+
+//        val offer: OfferDTO = offerService.getOfferById(review.offerId, token)
+//            ?: throw HttpClientErrorException(HttpStatus.NOT_FOUND)
+
+        val offer: OfferDTO? = offerService.getOfferById(review.offerId, token)
+
+        logger.info("offer: $offer")
+
+        val user: UserDTO? = userService.getRecruiterById(review.senderId, token)
+
+        logger.info("user: $user")
+
+
+
+
+//            ?: throw HttpClientErrorException(HttpStatus.NOT_FOUND)
+
+
+
+
+
+
+        return DetailedReviewDTO(
+            review.id,
+            review.grade,
+            review.message,
+            user!!,
+            review.responseList,
+            review.date,
+            offer!!
+        )
     }
 }

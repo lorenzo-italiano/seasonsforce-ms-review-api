@@ -94,6 +94,22 @@ class ReviewController @Autowired constructor(
         }
     }
 
+    @GetMapping("/sender/{id}")
+    @Produces(MediaType.APPLICATION_JSON_VALUE)
+    fun getReviewsBySenderId(@PathVariable id: UUID, @RequestHeader("Authorization") token: String): ResponseEntity<List<DetailedReviewDTO>> {
+        return try {
+            val reviews: List<DetailedReviewDTO> = reviewService.getReviewListBySenderId(id, token)
+            logger.info("Got reviews with sender id $id")
+            ResponseEntity(reviews, HttpStatus.OK)
+        } catch (e: HttpClientErrorException) {
+            logger.error("Failed to get reviews with sender id $id : " + e.statusCode)
+            ResponseEntity(e.statusCode)
+        } catch (e: Exception) {
+            logger.error("Failed to get reviews with sender id $id")
+            ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
     /**
      * Create a review.
      * @param review the review to create

@@ -228,4 +228,17 @@ class ReviewService @Autowired constructor(
             offer!!
         )
     }
+
+    fun getReviewListBySenderId(senderId: UUID, token: String): List<DetailedReviewDTO> {
+        val findBySenderId: List<Review> = reviewRepository.findBySenderId(senderId)
+
+        val reviewList: MutableList<DetailedReviewDTO> = mutableListOf()
+
+        for (review in findBySenderId) {
+            val detailedReview: DetailedReviewDTO = getDetailedReviewById(review.id, token)
+            reviewList.add(detailedReview)
+        }
+
+        return reviewList
+    }
 }

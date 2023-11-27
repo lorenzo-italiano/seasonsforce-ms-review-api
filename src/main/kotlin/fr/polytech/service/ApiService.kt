@@ -28,15 +28,12 @@ class ApiService @Autowired constructor(
     fun <T> makeApiCall(uri: String, method: HttpMethod, responseType: Class<T>, token: String): T? {
         logger.info("Making API call to {}", uri)
         val headers = createHeaders(token)
-        logger.info("Headers: {}", headers)
         val entity = HttpEntity<Void>(null, headers)
-        logger.info("Entity: {}", entity)
         try {
             val response: ResponseEntity<T> = restTemplate.exchange(uri, method, entity, responseType)
             logger.info("Response: {}", response)
             return if (response.statusCode === HttpStatus.OK && response.body != null) {
                 logger.info("API call successful")
-                logger.info("Response body: {}", response.body)
                 response.body
             } else {
                 logger.error("Failed to make API call to {}", uri)

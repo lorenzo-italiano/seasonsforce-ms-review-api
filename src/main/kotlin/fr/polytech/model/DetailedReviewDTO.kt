@@ -7,6 +7,7 @@ class DetailedReviewDTO (
     var grade: Int,
     var message: String,
     val sender: UserDTO,
+    val user: UserDTO,
     var responseList: List<Response>,
     var date: Date,
     val offer: OfferDTO

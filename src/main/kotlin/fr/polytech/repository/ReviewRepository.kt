@@ -5,4 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import java.util.*
 
 interface ReviewRepository : MongoRepository<Review, UUID> {
+    fun findBySenderId(senderId: UUID): List<Review>
 }

@@ -1,12 +1,16 @@
 package fr.polytech.service
 
-import fr.polytech.model.Response
-import fr.polytech.model.Review
+import com.auth0.jwt.JWT
+import com.auth0.jwt.interfaces.DecodedJWT
+import fr.polytech.model.*
+import fr.polytech.model.request.DeleteReviewDTO
 import fr.polytech.model.request.PatchReviewDTO
 import fr.polytech.model.request.ResponseDTO
+import fr.polytech.model.request.ReviewDTO
 import fr.polytech.repository.ReviewRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -14,7 +18,10 @@ import java.util.*
 
 @Service
 class ReviewService @Autowired constructor(
-    private val reviewRepository: ReviewRepository
+    private val reviewRepository: ReviewRepository,
+    private val userService: UserService,
+    private val offerService: OfferService,
+    private val apiService: ApiService
 ) {
 
     /**
@@ -49,9 +56,21 @@ class ReviewService @Autowired constructor(
      * @param review the review to create
      * @return the created review
      */
-    fun createReview(review: Review): Review {
+    @Throws(HttpClientErrorException::class)
+    fun createReview(review: ReviewDTO): Review {
         logger.info("Creating review")
-        return reviewRepository.save(review)
+        validateGrade(review.grade)
+        val reviewToCreate: Review = Review(
+            UUID.randomUUID(),
+            review.grade,
+            review.message,
+            review.senderId,
+            review.userId,
+            listOf(),
+            Date(),
+            review.offerId
+        )
+        return reviewRepository.save(reviewToCreate)
     }
 
     /**
@@ -64,6 +83,7 @@ class ReviewService @Autowired constructor(
     @Throws(HttpClientErrorException::class)
     fun updateReview(id: UUID, review: PatchReviewDTO): Review {
         logger.info("Updating review with id $id")
+        validateGrade(review.grade)
         val reviewToUpdate: Review =
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val reviewUpdated: Review = reviewToUpdate
@@ -86,12 +106,12 @@ class ReviewService @Autowired constructor(
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val responseToAdd: Response = Response(
             UUID.randomUUID(),
-            response.date,
+            Date(),
             response.message,
             response.senderId
         )
         val reviewUpdated: Review = reviewToUpdate
-        reviewUpdated.responseList = Optional.of(reviewToUpdate.responseList.orElse(listOf()).plus(responseToAdd))
+        reviewUpdated.responseList = reviewToUpdate.responseList.plus(responseToAdd)
         return reviewRepository.save(reviewUpdated)
     }
 
@@ -108,13 +128,13 @@ class ReviewService @Autowired constructor(
         val reviewToUpdate: Review =
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val reviewUpdated: Review = reviewToUpdate
-        reviewUpdated.responseList = Optional.of(reviewToUpdate.responseList.orElse(listOf()).map { r ->
+        reviewUpdated.responseList = reviewToUpdate.responseList.map { r ->
             if (r.id == response.id) {
                 response
             } else {
                 r
             }
-        })
+        }
         return reviewRepository.save(reviewUpdated)
     }
 
@@ -144,9 +164,89 @@ class ReviewService @Autowired constructor(
         val reviewToUpdate: Review =
             reviewRepository.findById(id).orElseThrow { HttpClientErrorException(HttpStatus.NOT_FOUND) }
         val reviewUpdated: Review = reviewToUpdate
-        reviewUpdated.responseList = Optional.of(reviewToUpdate.responseList.orElse(listOf()).filter { r ->
+        reviewUpdated.responseList = reviewToUpdate.responseList.filter { r ->
             r.id != response.id
-        })
+        }
         return reviewRepository.save(reviewUpdated)
+    }
+
+    /**
+     * Check if the user is the sender of the review.
+     * @param id the id of the review
+     * @param bearerToken the token of the user
+     * @return true if the user is the sender of the review, false otherwise
+     */
+    fun checkUser(id: UUID, bearerToken: String): Boolean {
+        val token: String = bearerToken.split(" ")[1]
+        val decodedToken: DecodedJWT? = JWT.decode(token)
+        return if (decodedToken == null) {
+            false
+        } else {
+            decodedToken.getClaim("sub").asString() == id.toString()
+        }
+    }
+
+    /**
+     * Validate the grade of the review.
+     * @param grade the grade to validate
+     * @throws HttpClientErrorException if the grade is not valid
+     */
+    @Throws(HttpClientErrorException::class)
+    fun validateGrade(grade: Int) {
+        if (grade < 0 || grade > 5) {
+            throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "The grade must be between 0 and 5")
+        }
+    }
+
+    /**
+     * Get a detailed review by its id.
+     * @param id the id of the review to get
+     * @param token the token of the user
+     * @return the detailed review with the given id
+     */
+    fun getDetailedReviewById(id: UUID, token: String): DetailedReviewDTO {
+        val review: Review = getReviewById(id)
+
+        val offer: OfferDTO? = offerService.getOfferById(review.offerId, token)
+
+        logger.info("offer: $offer")
+
+        val sender: UserDTO? = userService.getRecruiterById(review.senderId, token)
+
+        logger.info("user: $sender")
+
+        val user: UserDTO? = userService.getRecruiterById(review.userId, token)
+
+        logger.info("user: $user")
+
+        return DetailedReviewDTO(
+            review.id,
+            review.grade,
+            review.message,
+            sender!!,
+            user!!,
+            review.responseList,
+            review.date,
+            offer!!
+        )
+    }
+
+    /**
+     * Get a list of detailed reviews by the id of the user.
+     * @param userId the id of the user
+     * @param token the token of the user
+     * @return the list of detailed reviews with the given id of the user
+     */
+    fun getReviewListBySenderId(senderId: UUID, token: String): List<DetailedReviewDTO> {
+        val findBySenderId: List<Review> = reviewRepository.findBySenderId(senderId)
+
+        val reviewList: MutableList<DetailedReviewDTO> = mutableListOf()
+
+        for (review in findBySenderId) {
+            val detailedReview: DetailedReviewDTO = getDetailedReviewById(review.id, token)
+            reviewList.add(detailedReview)
+        }
+
+        return reviewList
     }
 }

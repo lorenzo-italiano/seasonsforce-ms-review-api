@@ -3,14 +3,12 @@ package fr.polytech.service
 import com.auth0.jwt.JWT
 import com.auth0.jwt.interfaces.DecodedJWT
 import fr.polytech.model.*
-import fr.polytech.model.request.DeleteReviewDTO
 import fr.polytech.model.request.PatchReviewDTO
 import fr.polytech.model.request.ResponseDTO
 import fr.polytech.model.request.ReviewDTO
 import fr.polytech.repository.ReviewRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -20,8 +18,7 @@ import java.util.*
 class ReviewService @Autowired constructor(
     private val reviewRepository: ReviewRepository,
     private val userService: UserService,
-    private val offerService: OfferService,
-    private val apiService: ApiService
+    private val offerService: OfferService
 ) {
 
     /**

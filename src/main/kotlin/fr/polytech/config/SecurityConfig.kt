@@ -15,6 +15,12 @@ class SecurityConfig {
 
     private val jwtAuthConverter = JwtAuthConverter()
 
+    /**
+     * Configure the security filter chain
+     *
+     * @param http the http security
+     * @return the security filter chain
+     */
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http

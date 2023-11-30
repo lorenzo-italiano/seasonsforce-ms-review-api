@@ -1,8 +1,6 @@
 package fr.polytech.service
 
-import fr.polytech.model.RecruiterDTO
 import fr.polytech.model.UserDTO
-import org.apache.catalina.User
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
@@ -18,6 +16,10 @@ class UserService @Autowired constructor(
 
     /**
      * Get a Recruiter by id.
+     *
+     * @param id the id of the Recruiter to get
+     * @param token the token of the user
+     * @throws HttpClientErrorException if an error occurs while getting the Recruiter
      */
     @Throws(HttpClientErrorException::class)
     fun getRecruiterById(id: UUID, token: String): UserDTO? {

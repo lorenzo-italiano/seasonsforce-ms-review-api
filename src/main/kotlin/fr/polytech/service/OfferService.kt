@@ -17,7 +17,11 @@ class OfferService {
     private val apiService: ApiService? = null
 
     /**
-     * Get a Recruiter by id.
+     * Get a Offer by id.
+     * @param id the id of the Recruiter to get
+     * @param token the token of the user
+     * @throws HttpClientErrorException if an error occurs while getting the Recruiter
+     * @return the Offer with the given id
      */
     @Throws(HttpClientErrorException::class)
     fun getOfferById(id: UUID, token: String): OfferDTO? {

@@ -15,6 +15,13 @@ class JwtAuthConverter : Converter<Jwt, AbstractAuthenticationToken> {
     private val jwtGrantedAuthoritiesConverter: JwtGrantedAuthoritiesConverter = JwtGrantedAuthoritiesConverter()
     private val principleAttribute: String = System.getenv("PRINCIPLE_ATTRIBUTE_NAME")
     private val resourceId: String = System.getenv("RESOURCE_ID")
+
+    /**
+     * Convert jwt to authentication token
+     *
+     * @param jwt the jwt to convert
+     * @return the authentication token
+     */
     override fun convert(jwt: Jwt): AbstractAuthenticationToken {
         val authorities: Collection<GrantedAuthority> = jwtGrantedAuthoritiesConverter.convert(jwt).orEmpty() + extractResourceRoles(jwt)
 
@@ -25,10 +32,22 @@ class JwtAuthConverter : Converter<Jwt, AbstractAuthenticationToken> {
         )
     }
 
+    /**
+     * Get the principle claim name from the jwt
+     *
+     * @param jwt the jwt to extract the principle claim name from
+     * @return the principle claim name
+     */
     private fun getPrincipleClaimName(jwt: Jwt): String? {
         return jwt.getClaimAsString(principleAttribute)
     }
 
+    /**
+     * Extract resource roles from the jwt
+     *
+     * @param jwt the jwt to extract roles from
+     * @return a collection of granted authorities
+     */
     private fun extractResourceRoles(jwt: Jwt): Collection<GrantedAuthority> {
         val resourceAccess: Map<String, Any>? = jwt.getClaimAsMap("resource_access")
         val resource: Map<String, Any>? = resourceAccess?.get(resourceId) as? Map<String, Any>
